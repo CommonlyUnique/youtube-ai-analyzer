@@ -5,11 +5,21 @@ from datetime import datetime
 def get_db_connection(db_path=None):
     """
     SQLite 데이터베이스 연결 객체를 생성하여 반환합니다.
+    Streamlit Cloud의 st.secrets와 로컬 .env 파일을 모두 지원합니다.
     """
     if db_path is None:
-        from dotenv import load_dotenv
-        load_dotenv()
-        db_path = os.getenv("DATABASE_PATH", "data/youtube_analyzer.db")
+        # 1순위: Streamlit Cloud secrets
+        try:
+            import streamlit as st
+            db_path = st.secrets.get("DATABASE_PATH", None)
+        except Exception:
+            db_path = None
+        
+        # 2순위: 로컬 .env 파일
+        if not db_path:
+            from dotenv import load_dotenv
+            load_dotenv()
+            db_path = os.getenv("DATABASE_PATH", "data/youtube_analyzer.db")
     
     # 데이터베이스 저장 디렉토리 자동 생성
     db_dir = os.path.dirname(db_path)

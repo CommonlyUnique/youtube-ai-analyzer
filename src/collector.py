@@ -11,8 +11,20 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from db import get_db_connection
 
 load_dotenv()
-API_KEY = os.getenv("YOUTUBE_API_KEY")
-DB_PATH = os.getenv("DATABASE_PATH", "data/youtube_analyzer.db")
+
+# Streamlit Cloud secrets 우선, 없으면 .env 파일 사용
+def _get_secret(key, default=None):
+    try:
+        import streamlit as st
+        val = st.secrets.get(key, None)
+        if val:
+            return val
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
+API_KEY = _get_secret("YOUTUBE_API_KEY")
+DB_PATH = _get_secret("DATABASE_PATH", "data/youtube_analyzer.db")
 
 def get_youtube_client():
     if not API_KEY or API_KEY == "YOUR_YOUTUBE_API_KEY_HERE":
