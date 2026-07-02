@@ -8,15 +8,34 @@ from datetime import datetime
 
 # 임포트 경로 추가
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from db import get_db_connection
+from db import get_db_connection, init_db
 from analyzer import get_channel_analysis, get_niche_market_analysis
 
-# 1. Streamlit 앱 설정 및 프리미엄 테마 적용 (CSS)
+# 1. Streamlit 앱 설정 (반드시 첫 번째 st 명령어)
 st.set_page_config(
     page_title="유튜브 AI 음원 및 플레이리스트 트렌드 분석기",
     page_icon="🎵",
     layout="wide"
 )
+
+# ── DB 초기화 및 Mock 데이터 자동 적재 (Streamlit Cloud 첫 실행 대응) ──────────
+@st.cache_resource
+def bootstrap_database():
+    """앱 시작 시 DB 테이블 생성 및 데이터 없으면 Mock 데이터 자동 생성."""
+    try:
+        init_db()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM channels")
+        count = cursor.fetchone()[0]
+        conn.close()
+        if count == 0:
+            from collector import generate_and_store_mock_data
+            generate_and_store_mock_data()
+    except Exception as e:
+        st.error(f"DB 초기화 오류: {e}")
+
+bootstrap_database()
 
 # 다크 모드에 어울리는 고품격 그래디언트 및 그림자 효과 추가
 st.markdown("""
